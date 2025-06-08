@@ -194,6 +194,24 @@ def card_str(card: int) -> str:
     """整数表現を 'J','Q','K' の文字列へ変換。"""
     return ("J", "Q", "K")[card]
 
+def describe_history(history: str) -> str:
+    """履歴文字列を日本語の人間可読形式に変換する。"""
+    # 'rr' は配札を表すダミーなので無視
+    actions = []
+    bet_happened = False
+    # 先手は P1, 次手は P2 ... と交互
+    for i, ch in enumerate(history[2:]):
+        actor = "P1" if i % 2 == 0 else "P2"
+        if ch == "c":
+            action = "チェック" if not bet_happened else "フォールド"
+        else:  # 'b'
+            action = "ベット" if not bet_happened else "コール"
+            if not bet_happened:
+                bet_happened = True
+        actions.append(f"{actor}:{action}")
+
+    return "開始直後" if not actions else "→".join(actions)
+
 def get_info_set(
     i_map: dict[str, "InformationSet"],
     card: int,
@@ -265,8 +283,11 @@ class InformationSet:
 
     # ─── デバッグ用表示 ─────────────────────────────────────
     def __str__(self) -> str:
+        card, history = self.key.split()
+        readable = describe_history(history)
         probs = [f"{p:0.2f}" for p in self.get_average_strategy()]
-        return f"{self.key.ljust(6)} {probs}"
+        prob_str = "/".join(probs)
+        return f"カード{card} | 履歴: {readable} | 戦略: {prob_str}"
 
 # ──────────────────────────────────────────────────────────────
 # 結果表示
