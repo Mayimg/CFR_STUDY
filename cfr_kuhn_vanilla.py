@@ -21,6 +21,8 @@ $ python cfr_kuhn_vanilla.py
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+import japanize_matplotlib
 
 # ──────────────────────────────────────────────────────────────
 # 定数定義
@@ -42,18 +44,22 @@ def main() -> None:
     n_iterations = 10_000           # 反復回数（精度が欲しければ増やす）
 
     expected_game_value = 0.0       # 反復ごとのゲーム値を累積
+    ev_history: list[float] = []    # プレイヤー1の期待利得推移
 
-    for _ in range(n_iterations):
+    for t in range(1, n_iterations + 1):
         expected_game_value += cfr(i_map)      # 1 回分の木探索 → 利得を加算
 
         # 1 反復が終わったら全情報集合で次回戦略を計算
         for info_set in i_map.values():
             info_set.next_strategy()
 
+        ev_history.append(expected_game_value / t)
+
     # 反復平均を取ることで近似ゲーム値を得る
     expected_game_value /= n_iterations
 
     display_results(expected_game_value, i_map)
+    plot_ev_history(ev_history)
 
 # ──────────────────────────────────────────────────────────────
 # CFR 本体 – 深さ優先でゲーム木を全探索（Vanilla CFR）
@@ -277,6 +283,21 @@ def display_results(ev: float, i_map: dict[str, InformationSet]) -> None:
     print("\nplayer 2 strategies:")
     for _, v in sorted(filter(lambda kv: len(kv[0]) % 2 == 1, i_map.items())):
         print(v)
+
+def plot_ev_history(ev_history: list[float]) -> None:
+    """反復ごとの期待利得推移をグラフ表示する。"""
+    iterations = np.arange(1, len(ev_history) + 1)
+
+    plt.figure()
+    plt.plot(iterations, ev_history, label="プレイヤー1")
+    plt.plot(iterations, -np.array(ev_history), label="プレイヤー2")
+    plt.xlabel("反復回数")
+    plt.ylabel("期待利得")
+    plt.title("期待利得の変化")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
 # ──────────────────────────────────────────────────────────────
 # エントリポイント
