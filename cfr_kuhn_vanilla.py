@@ -212,6 +212,13 @@ def describe_history(history: str) -> str:
 
     return "開始直後" if not actions else "→".join(actions)
 
+def action_labels(history: str) -> tuple[str, str]:
+    """その情報集合で選択できる行動名を返す。"""
+    bet_happened = "b" in history[2:]
+    if bet_happened:
+        return ("フォールド", "コール")
+    return ("チェック", "ベット")
+
 def get_info_set(
     i_map: dict[str, "InformationSet"],
     card: int,
@@ -285,8 +292,9 @@ class InformationSet:
     def __str__(self) -> str:
         card, history = self.key.split()
         readable = describe_history(history)
+        actions = action_labels(history)
         probs = [f"{p:0.2f}" for p in self.get_average_strategy()]
-        prob_str = "/".join(probs)
+        prob_str = f"{actions[0]}:{probs[0]} / {actions[1]}:{probs[1]}"
         return f"カード{card} | 履歴: {readable} | 戦略: {prob_str}"
 
 # ──────────────────────────────────────────────────────────────
